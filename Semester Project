@@ -1,3 +1,455 @@
 ## Semester Project
 
 ## 2048 Game (in Python)
+import pygame
+import random
+
+# The code snippet is initializing the Pygame library and setting up the game window.
+width = 500
+height = 500
+FPS = 30                        #frames per second. How many images are present/displayed on the screen
+pygame.init()
+scr = pygame.display.set_mode([width, height])
+pygame.display.set_caption('2048 Game')
+
+def draw(window):
+    """
+    The function `draw` fills the window with a color from a dictionary and updates the display.
+    
+    :param window: The "window" parameter is the surface object representing the window or screen on
+    which you want to draw. It is typically created using the `pygame.display.set_mode()` function
+    """
+    window.fill(colors[2])  # choosing any color from dict for grid background
+    pygame.display.update()
+
+# The `colors` dictionary is defining the color codes for different numbers in the game. Each
+# key-value pair in the dictionary represents a number and its corresponding color code. For example,
+# the number 2 is represented by the color code "#fcefe6", the number 4 is represented by the color
+# code "#f2e8cb", and so on. These color codes are used to fill the grid cells with the respective
+# colors when drawing the game grid.
+#colors
+colors = {
+    2: "#fcefe6",
+    4: "#f2e8cb",
+    8: "#f5b682",
+    16: "#f29446",
+    32: "#ff775c",
+    64: "#e64c2e",
+    128: "#ede291",
+    256: "#fce130",
+    512: "#ffdb4a",
+    1024: "#f0b922",
+    2048: "#fad74d"
+}
+# The `numbers` dictionary is defining the color codes for the text displayed inside each grid cell in
+# the game. Each key-value pair in the dictionary represents a number and its corresponding color
+# code. For example, the number 2 is represented by the color code "#695c57", the number 4 is also
+# represented by the color code "#695c57", and so on. These color codes are used to render the text
+# with the respective colors when drawing the game grid.
+numbers = {
+    2: "#695c57",
+    4: "#695c57",
+    8: "#ffffff",
+    16: "#ffffff",
+    32: "#ffffff",
+    64: "#ffffff",
+    128: "#ffffff",
+    256: "#ffffff",
+    512: "#ffffff",
+    1024: "#ffffff",
+    2048: "#ffffff"
+}
+
+# The Game class has a static method called start_game that creates a 4x4 matrix filled with zeros.
+# logics
+class Game:
+    Game_Over = False
+
+    score = 0       #initializing the score
+
+    @staticmethod
+    def start_game():
+        mat = []
+        for i in range(4):
+            mat.append([0]*4)
+        return mat
+    
+    @staticmethod
+    def addnew2(mat):
+        """
+    The `addnew2` function adds a randomly generated number 2 to an empty space in a given matrix.
+    :param mat: The parameter "mat" is a 2-dimensional list representing a matrix. It is assumed to be a
+    4x4 matrix, where each element represents a cell in the matrix. The elements of the matrix can be
+    either 0 or a power of 2 (2, 4,
+    """
+        row = random.randint(0,3)           #generating number
+        col = random.randint(0,3)
+        while(mat[row][col] != 0):          #add 2 in empty space
+            row = random.randint(0,3)
+            col = random.randint(0,3)
+        mat[row][col] = 2
+
+    @staticmethod
+    def reverse(mat):                                               #to move tiles right or up
+        """
+        The above function takes a 4x4 matrix as input and returns a new matrix with the elements
+        reversed horizontally.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing a matrix. It has 4 rows and
+        4 columns
+        :return: a new matrix that is the reverse of the input matrix.
+        """
+        new_mat = []
+        for i in range(4):
+            new_mat.append([])
+            for j in range(4):
+                new_mat[i].append(mat[i][4-j-1])
+        return new_mat
+    
+    @staticmethod
+    def transpose(mat):             #swapping the indices of rows and columns in the new matrix
+        """
+        The function `transpose` takes a matrix as input and returns its transpose.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing a matrix. It has 4 rows and
+        4 columns
+        :return: a transposed matrix.
+        """
+        new_mat = []
+        for i in range(4):
+            new_mat.append([])
+            for j in range(4):
+                new_mat[i].append(mat[j][i])
+        return new_mat
+
+    @staticmethod
+    def merge(mat):
+        """
+        The function merges adjacent elements in each row of a matrix if they are equal and not equal to
+        zero.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing a 4x4 matrix. Each element
+        in the matrix represents a tile with a value
+        """
+        for i in range(4):
+            for j in range(3):
+                if mat[i][j] == mat[i][j+1] and mat[i][j]!=0:
+                    # mat[i][j] = mat[i][j]*2
+                    mat[i][j] *= 2
+                    mat[i][j+1] = 0
+
+                    # Incrementing score when merging tiles
+                    Game.score += mat[i][j]
+
+    @staticmethod
+    def compress(mat):      #ensuring consistent handling of empty spaces during tile movement
+        """
+        The function compress takes a 4x4 matrix as input and returns a new matrix with all the non-zero
+        elements shifted to the left.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing a 4x4 matrix. Each element
+        in the matrix represents a number
+        :return: a new matrix with all the non-zero elements from the original matrix compressed to the
+        left side of each row.
+        """
+        new_mat = []
+        for i in range(4):
+            new_mat.append([0]*4)
+        for i in range(4):
+            pos = 0
+            for j in range(4):
+                if mat[i][j] != 0:
+                    new_mat[i][pos] = mat[i][j]
+                    pos+=1
+        return new_mat
+    
+    @staticmethod
+    def move_up(grid):
+        """
+        The function moves all the elements in the grid up and returns the updated grid.
+        
+        :param grid: The parameter "grid" is a 2-dimensional list representing the game grid. Each
+        element in the list represents a tile on the grid, with its value indicating the number on the
+        tile
+        :return: the final grid after moving all the elements up in the grid.
+        """
+        transposed_grid = Game.transpose(grid)
+        new_grid = Game.compress(transposed_grid)
+        Game.merge(new_grid)
+        new_grid = Game.compress(new_grid)
+        final_grid = Game.transpose(new_grid)
+        return final_grid
+
+    @staticmethod
+    def move_down(grid):
+        """
+        The function moves all the elements in a grid down and returns the resulting grid.
+        
+        :param grid: The parameter "grid" is a 2-dimensional list representing the game grid. It
+        contains the current state of the game board, where each element represents a tile on the grid
+        :return: the final grid after moving down.
+        """
+        transposed_grid = Game.transpose(grid)
+        reversed_grid = Game.reverse(transposed_grid)
+        new_grid = Game.compress(reversed_grid)
+        Game.merge(new_grid)
+        new_grid = Game.compress(new_grid)
+        final_reversed_grid = Game.reverse(new_grid)
+        final_grid = Game.transpose(final_reversed_grid)
+        return final_grid
+
+    @staticmethod
+    def move_right(grid):
+        """
+        The function moves all the elements in the grid to the right and returns the updated grid.
+        
+        :param grid: The grid parameter represents a 2-dimensional list or array that represents the
+        current state of the game grid. Each element in the grid represents a tile on the grid, with its
+        value indicating the number on the tile
+        :return: the grid after moving all the elements to the right.
+        """
+        reversed_grid = Game.reverse(grid)
+        new_grid = Game.compress(reversed_grid)
+        Game.merge(new_grid)
+        new_grid = Game.compress(new_grid)
+        final_grid = Game.reverse(new_grid)
+        return final_grid
+
+    @staticmethod
+    def move_left(grid):
+        """
+        The function "move_left" takes a grid as input, compresses it, merges the cells, compresses it
+        again, and returns the resulting grid.
+        
+        :param grid: The grid parameter represents a 2-dimensional list or array that represents the
+        current state of the game grid. Each element in the grid represents a tile on the grid, and its
+        value represents the number on the tile
+        :return: the updated grid after moving all the elements to the left.
+        """
+        new_grid = Game.compress(grid)
+        Game.merge(new_grid)
+        new_grid = Game.compress(new_grid)
+        return new_grid
+
+    @staticmethod
+    def get_current_state(mat):
+        """
+        The function `get_current_state` checks the current state of the game board and returns whether
+        the game is won, not over, or over.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing the current state of the
+        game board. It is a 4x4 grid where each element represents the value of a tile on the board
+        :return: the current state of the game. It can return either 'WON' if the number 2048 is present
+        on the board, 'Game Not Over' if there are empty cells or adjacent cells with the same value, or
+        'Game Over' if there are no empty cells and no adjacent cells with the same value.
+        """
+        for i in range(4):                  #anywhere 2048 is preent
+            for j in range(4):
+                if (mat[i][j] == 2048):
+                    return 'WON'
+        for i in range(4):                  #anywhere 0 is presnet
+            for j in range(4):
+                if(mat[i][j] == 0):
+                    return 'Game Not Over'
+        for i in range(3):                   #every row & col except last row & last col
+            for j in range(3):
+                if (mat[i][j] == mat[i+1][j] or mat[i][j] == mat[i][j+1]):
+                    return 'Game Not Over'
+        for j in range(3):                  #last row
+            if mat[3][j] == mat[3][j+1]:
+                return 'Game Not Over'
+        for i in range(3):
+            if mat[i][3] == mat[i+1][3]:
+                return 'Game Over'
+
+    @staticmethod
+    def draw_grid(mat):
+        """
+        The function `draw_grid` takes a matrix as input and draws a grid on the screen with each cell
+        colored based on its value and displaying the value in the center of the cell.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing the grid. Each element in
+        the list represents the value of a cell in the grid
+        """
+        for i in range(4):
+            for j in range(4):
+                cell_value = mat[i][j]
+                cell_color = colors.get(cell_value, "#ffffff")
+                pygame.draw.rect(scr, cell_color, (j * 125, i * 125, 125, 125))
+            
+                font = pygame.font.Font(None, 36)
+                text_color = numbers.get(cell_value, "#ffffff")
+
+                text = font.render(str(cell_value), True, text_color)
+                scr.blit(text, (j * 125 + 50, i * 125 + 50))
+
+        # Displaying the score on the window
+        font = pygame.font.Font(None, 36)
+        score_text = font.render(f"Score: {Game.score}", True, (0, 0, 0))
+        scr.blit(score_text, (10, 10))  # Adjusted position to top-left corner
+
+        pygame.display.update()
+
+    @classmethod
+    def game_over(cls):
+        """
+        The function "game_over" displays a "GAME OVER" message on the screen and waits for the player
+        to press the space key to restart the game.
+        
+        :param cls: The parameter "cls" is typically used as a reference to the class itself. It allows
+        the method to access and modify class attributes and call other class methods. In this case, it
+        seems like "cls" is an instance of a class that has a "Game_Over" attribute. The method
+        :return: a boolean value. If the space key is pressed, it returns True to indicate that the game
+        should be restarted. Otherwise, it returns False to indicate that the game should not be
+        restarted.
+        """
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        game_over_text = font.render("GAME OVER", True, colors.get(64))
+        space_text = font.render("Press space key to restart", True, colors.get(16))
+
+        scr.blit(game_over_text, (width // 2 - 100, height // 2 - 20))
+        scr.blit(space_text, (width // 2 - 180, height // 2 + 20))
+
+        pygame.display.update()
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            cls.Game_Over = False  # Reset the game over flag
+            return True  # Indicate restart
+        return False  # No restart
+    @classmethod
+    def restart_game(cls):
+        """
+        The function restart_game sets the Game_Over attribute of a class to False.
+        
+        :param cls: The parameter "cls" is typically used as a convention to refer to the class itself.
+        In this case, it seems like the function is a method of a class, and "cls" is used to refer to
+        the class object
+        """
+        cls.Game_Over = False
+
+    @staticmethod
+    def no_moves_left(mat):
+        """
+        The function `no_moves_left` checks if there are no more possible moves by attempting to
+        move in all directions and comparing the resulting matrices.
+        
+        :param mat: The parameter "mat" is a 2-dimensional list representing the current state of the
+        game board. It is a 4x4 grid where each element represents the value of a tile on the board
+        :return: True if no more moves are possible, False otherwise.
+        """
+        original_mat = [row[:] for row in mat]
+        # Try moving in all directions and compare matrices
+        up_mat = Game.move_up(original_mat)
+        down_mat = Game.move_down(original_mat)
+        left_mat = Game.move_left(original_mat)
+        right_mat = Game.move_right(original_mat)
+
+        return up_mat == down_mat == left_mat == right_mat == original_mat
+
+
+    @classmethod
+    def main(cls):
+        """
+        The main function initializes the game, starts the game loop, and draws the grid.
+        
+        :param cls: The parameter `cls` is typically used as a reference to the class itself. It is
+        commonly used when defining class methods or when creating an instance of the class within the
+        class itself. In this case, it seems that `cls` is being used as a reference to the class that
+        `main`
+        """
+        #this method sets up the initial state of the game, adds a new tile, and draws the initial grid.
+        #The complete game loop (user input, updating game state, etc.) is expected to follow this initialization part.
+        running = True
+        clock = pygame.time.Clock()
+
+        # initialization of the game
+        game = cls()
+        mat = game.start_game()
+        game.addnew2(mat)
+        cls.draw_grid(mat)
+
+        
+        # The below code is responsible for handling user input and updating the game state accordingly.
+        while running:
+            clock.tick(FPS)
+            pygame.event.pump()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+                # The code below is checking if the game is not over. If the game is not over, it
+                # checks if a key is pressed. If a key is pressed, it checks if the grid is full and
+                # no valid moves are available. If both conditions are true, it prints "No more moves
+                # left. Game Over!" and quits the game.
+                if not cls.Game_Over:
+                    if event.type == pygame.KEYDOWN:
+                        # Check if the grid is full and no valid moves are available
+                        if all(mat[i][j] != 0 for i in range(4) for j in range(4)) and cls.no_moves_left(mat):
+                            print("No more moves left. Game Over!")
+                            cls.Game_Over = True
+                            
+
+                        # The code here below is checking for key events in a Pygame application. If the
+                        # key pressed is the up arrow key, it calls the `move_up` function with the
+                        # `mat` parameter. If the key pressed is the down arrow key, it calls the
+                        # `move_down` function with the `mat` parameter. If the key pressed is the
+                        # left arrow key, it calls the `move_left` function with the `mat` parameter.
+                        # If the key pressed is the right arrow key, it calls the `move_right`
+                        # function with the `mat` parameter.
+                        if event.key == pygame.K_UP:
+                            new_mat = game.move_up(mat)
+                        elif event.key == pygame.K_DOWN:
+                            new_mat = game.move_down(mat)
+                        elif event.key == pygame.K_LEFT:
+                            new_mat = game.move_left(mat)
+                        elif event.key == pygame.K_RIGHT:
+                            new_mat = game.move_right(mat)
+
+                        # Check if the move is valid
+                        if new_mat != mat:
+                            mat = new_mat
+                            game.addnew2(mat)
+                            cls.draw_grid(mat)
+
+                            # Updates the score when move is made
+                            cls.score += 1
+                            # Merge tiles and update the score
+                            game.merge(mat)
+                            cls.draw_grid(mat)
+
+                # This checks if the game is over and if there are no more moves left.
+                # If both conditions are true, it prints "No more moves left. Game Over!" and then
+                # quits the game.
+                game_state = game.get_current_state(mat)
+                if game_state == 'Game Over' or game_state == 'WON':
+                    print(f'Game Over: {game_state} Score: {cls.score}')
+                    cls.Game_Over = True
+                    cls.game_over()  # Display "Game Over" on the game window
+
+                        # Restart the game
+                        # mat = game.start_game()
+                        # game.addnew2(mat)
+                        # cls.draw_grid(mat)
+
+                # The below code is checking the current state of the game and if the game state is
+                # either "Game Over" or "WON", it prints a message indicating the game is over and
+                # sets the "Game_Over" flag to True.
+                # game_state = game.get_current_state(mat)
+                # if game_state == 'Game Over' or game_state == 'WON':
+                #     print(f'Game Over: {game_state}')
+                #     cls.Game_Over = True  # Set the game over flag
+
+            # This is updating the display in a Pygame application.
+            pygame.display.update()
+
+        # quitting the pygame module and then quitting the program.
+        pygame.quit()
+        quit()
+
+# This is checking if the current module is being run as the main module. 
+# If it is, it calls the `main()` method of the `Game` class.
+# starting the game
+if __name__ == "__main__":
+    Game.main()
